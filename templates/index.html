@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Job Tracker</title>
+    <script>
+        async function liveSearch() {
+            let query = document.getElementById("companySearch").value;
+            let resultsDiv = document.getElementById("results");
+
+            if (query.length === 0) {
+                resultsDiv.innerHTML = "";
+                return;
+            }
+
+            let response = await fetch(`/search_api?company=${query}`);
+            let data = await response.json();
+
+            if (data.length === 0) {
+                resultsDiv.innerHTML = "<p>No results found</p>";
+                return;
+            }
+
+            let html = "<table border='1' cellpadding='5'><tr><th>Job Title</th><th>Company</th><th>Skills</th><th>Location</th></tr>";
+            data.forEach(job => {
+                html += `<tr>
+                            <td>${job[0]}</td>
+                            <td>${job[1]}</td>
+                            <td>${job[2]}</td>
+                            <td>${job[3]}</td>
+                         </tr>`;
+            });
+            html += "</table>";
+
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</head>
+<body>
+    <h2>Add Job</h2>
+    <form action="/add" method="post">
+        <label>Job Title:</label><br>
+        <input type="text" name="job_title" required><br>
+        
+        <label>Company Name:</label><br>
+        <input type="text" name="company_name" required><br>
+        
+        <label>Skills Required:</label><br>
+        <input type="text" name="skills" required><br>
+        
+        <label>Location:</label><br>
+        <input type="text" name="location"><br><br>
+        
+        <button type="submit">Save Job</button>
+    </form>
+
+    <h2>Search Jobs by Company</h2>
+    <input type="text" id="companySearch" placeholder="Type company name..." onkeyup="liveSearch()">
+    <div id="results"></div>
+</body>
+</html>
