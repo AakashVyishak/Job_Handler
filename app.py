@@ -44,10 +44,20 @@ def search_api():
     company = request.args.get("company", "")
     conn = sqlite3.connect("jobs.db")
     c = conn.cursor()
-    c.execute("SELECT job_title, company_name, skills, location FROM jobs WHERE company_name LIKE ?", ('%'+company+'%',))
+    c.execute("SELECT id, job_title, company_name, skills, location FROM jobs WHERE company_name LIKE ?", ('%'+company+'%',))
     results = c.fetchall()
     conn.close()
     return jsonify(results)
+
+@app.route("/delete/<int:job_id>", methods=["POST"])
+def delete_job(job_id):
+    conn = sqlite3.connect("jobs.db")
+    c = conn.cursor()
+    c.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
+    conn.commit()
+    conn.close()
+    return ("", 204)
+
 
 if __name__ == "__main__":
     app.run(debug=True)

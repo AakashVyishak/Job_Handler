@@ -1,60 +1,202 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Job Tracker</title>
-    <script>
-        async function liveSearch() {
-            let query = document.getElementById("companySearch").value;
-            let resultsDiv = document.getElementById("results");
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f9f9f9;
+      color: #333;
+    }
 
-            if (query.length === 0) {
-                resultsDiv.innerHTML = "";
-                return;
-            }
+    h2 {
+      margin-top: 30px;
+      font-size: 1.4rem;
+      color: #222;
+    }
 
-            let response = await fetch(`/search_api?company=${query}`);
-            let data = await response.json();
+    form, .search-box {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
 
-            if (data.length === 0) {
-                resultsDiv.innerHTML = "<p>No results found</p>";
-                return;
-            }
+    label {
+      font-size: 0.9rem;
+      display: block;
+      margin-top: 10px;
+    }
 
-            let html = "<table border='1' cellpadding='5'><tr><th>Job Title</th><th>Company</th><th>Skills</th><th>Location</th></tr>";
-            data.forEach(job => {
-                html += `<tr>
-                            <td>${job[0]}</td>
-                            <td>${job[1]}</td>
-                            <td>${job[2]}</td>
-                            <td>${job[3]}</td>
-                         </tr>`;
-            });
-            html += "</table>";
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
 
-            resultsDiv.innerHTML = html;
-        }
-    </script>
+    button {
+      margin-top: 15px;
+      padding: 10px 15px;
+      font-size: 1rem;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+      font-size: 0.95rem;
+    }
+
+    th {
+      background: #007bff;
+      color: white;
+      font-weight: bold;
+    }
+
+    tr:hover {
+      background: #f1f1f1;
+    }
+
+    .delete-btn {
+      background: #dc3545;
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      border-radius: 6px;
+    }
+
+    .delete-btn:hover {
+      background: #a71d2a;
+    }
+
+    /* Mobile tweaks */
+    @media (max-width: 600px) {
+      body {
+        margin: 10px;
+      }
+
+      table, thead, tbody, th, td, tr {
+        display: block;
+        width: 100%;
+      }
+
+      tr {
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        background: #fff;
+      }
+
+      td {
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 5px;
+      }
+
+      td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: #555;
+      }
+
+      th {
+        display: none;
+      }
+    }
+  </style>
+  <script>
+    async function liveSearch() {
+      let query = document.getElementById("companySearch").value;
+      let resultsDiv = document.getElementById("results");
+
+      if (query.length === 0) {
+        resultsDiv.innerHTML = "";
+        return;
+      }
+
+      let response = await fetch(`/search_api?company=${query}`);
+      let data = await response.json();
+
+      if (data.length === 0) {
+        resultsDiv.innerHTML = "<p>No results found</p>";
+        return;
+      }
+
+      let html = "<table><tr><th>Job Title</th><th>Company</th><th>Skills</th><th>Location</th><th>Action</th></tr>";
+      data.forEach(job => {
+        html += `<tr>
+                  <td data-label="Job Title">${job[1]}</td>
+                  <td data-label="Company">${job[2]}</td>
+                  <td data-label="Skills">${job[3]}</td>
+                  <td data-label="Location">${job[4]}</td>
+                  <td data-label="Action"><button class="delete-btn" onclick="deleteJob(${job[0]})">Delete</button></td>
+                </tr>`;
+      });
+      html += "</table>";
+
+      resultsDiv.innerHTML = html;
+    }
+
+    async function deleteJob(jobId) {
+      if (!confirm("Are you sure you want to delete this job?")) return;
+      let response = await fetch(`/delete/${jobId}`, { method: "POST" });
+      if (response.ok) {
+        liveSearch(); // Refresh results
+      } else {
+        alert("Failed to delete job.");
+      }
+    }
+  </script>
 </head>
 <body>
-    <h2>Add Job</h2>
-    <form action="/add" method="post">
-        <label>Job Title:</label><br>
-        <input type="text" name="job_title" required><br>
-        
-        <label>Company Name:</label><br>
-        <input type="text" name="company_name" required><br>
-        
-        <label>Skills Required:</label><br>
-        <input type="text" name="skills" required><br>
-        
-        <label>Location:</label><br>
-        <input type="text" name="location"><br><br>
-        
-        <button type="submit">Save Job</button>
-    </form>
+  <h2>Add Job</h2>
+  <form action="/add" method="post">
+    <label>Job Title:</label>
+    <input type="text" name="job_title" required>
+    
+    <label>Company Name:</label>
+    <input type="text" name="company_name" required>
+    
+    <label>Skills Required:</label>
+    <input type="text" name="skills" required>
+    
+    <label>Location:</label>
+    <input type="text" name="location">
+    
+    <button type="submit">Save Job</button>
+  </form>
 
-    <h2>Search Jobs by Company</h2>
+  <h2>Search Jobs by Company</h2>
+  <div class="search-box">
     <input type="text" id="companySearch" placeholder="Type company name..." onkeyup="liveSearch()">
-    <div id="results"></div>
+  </div>
+  <div id="results"></div>
 </body>
 </html>
